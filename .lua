@@ -161,7 +161,7 @@ local ICON_SHOP     = 139824330037901
 local ICON_UPDATE   = 134419329246667
 local ICON_SERVER   = 77839913086023
 local ICON_SETTINGS = 72289858646360
-local TOGGLE_ICON = "rbxassetid://117052960049460"
+local TOGGLE_ICON = "rbxassetid://86955640536661"
 
 local function corner(p,r) local u=Instance.new("UICorner",p) u.CornerRadius=UDim.new(0,r or 10) return u end
 local function stroke(p,th,col,tr) local s=Instance.new("UIStroke",p) s.Thickness=th or 1 s.Color=col or THEME.MINT s.Transparency=tr or 0.35 s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.LineJoinMode=Enum.LineJoinMode.Round return s end
