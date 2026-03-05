@@ -723,6 +723,108 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
+local TweenService = game:GetService("TweenService")
+local THEME = {
+    GREEN = Color3.fromRGB(25,255,125),
+    RED   = Color3.fromRGB(255,40,40),
+    WHITE = Color3.fromRGB(255,255,255),
+    BLACK = Color3.fromRGB(0,0,0),
+}
+
+local function corner(ui,r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0,r or 12)
+    c.Parent = ui
+end
+
+local function stroke(ui,th,col)
+    local s = Instance.new("UIStroke")
+    s.Thickness = th or 2.2
+    s.Color = col or THEME.GREEN
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Parent = ui
+end
+
+local function tween(o,props,d)
+    TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props):Play()
+end
+
+-- ตัวอย่างฟังก์ชัน expandable row
+local function makeExpandableRow(name, order, labelText, parent, contentFunc)
+    local expanded = false
+    local row = Instance.new("Frame")
+    row.Name = name
+    row.Parent = parent
+    row.Size = UDim2.new(1,-6,0,46)
+    row.BackgroundColor3 = THEME.BLACK
+    corner(row,12)
+    stroke(row,2.2,THEME.GREEN)
+    row.LayoutOrder = order
+
+    -- Label ซ้าย
+    local lab = Instance.new("TextLabel")
+    lab.Parent = row
+    lab.BackgroundTransparency = 1
+    lab.Size = UDim2.new(1,-40,1,0)
+    lab.Position = UDim2.new(0,16,0,0)
+    lab.Font = Enum.Font.GothamBold
+    lab.TextSize = 13
+    lab.TextColor3 = THEME.WHITE
+    lab.TextXAlignment = Enum.TextXAlignment.Left
+    lab.Text = labelText
+
+    -- ลูกศรขวา
+    local arrow = Instance.new("TextLabel")
+    arrow.Parent = row
+    arrow.BackgroundTransparency = 1
+    arrow.AnchorPoint = Vector2.new(1,0.5)
+    arrow.Position = UDim2.new(1,-12,0.5,0)
+    arrow.Size = UDim2.new(0,24,0,24)
+    arrow.Font = Enum.Font.GothamBold
+    arrow.TextSize = 18
+    arrow.TextColor3 = THEME.WHITE
+    arrow.Text = "▶"
+
+    -- Container สำหรับระบบที่จะแสดง/ซ่อน
+    local contentContainer = Instance.new("Frame")
+    contentContainer.Name = name.."_Content"
+    contentContainer.Parent = parent
+    contentContainer.Size = UDim2.new(1,0,0,0)
+    contentContainer.BackgroundTransparency = 1
+    contentContainer.ClipsDescendants = true
+    contentContainer.LayoutOrder = order + 1
+
+    -- สร้าง content จริงด้วย callback
+    local contentFrame = contentFunc(contentContainer)
+    contentFrame.Size = UDim2.new(1,0,0, contentFrame.Size.Y.Offset)
+
+    -- ปุ่มกด
+    row.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            expanded = not expanded
+            if expanded then
+                tween(arrow,{Rotation = 90},0.15)
+                tween(contentContainer,{Size=UDim2.new(1,0,0,contentFrame.Size.Y.Offset)},0.2)
+            else
+                tween(arrow,{Rotation = 0},0.15)
+                tween(contentContainer,{Size=UDim2.new(1,0,0,0)},0.2)
+            end
+        end
+    end)
+
+    return row, contentContainer
+end
+
+-- ตัวอย่างการใช้งาน:
+-- makeExpandableRow("TestRow", 1, "Expandable Feature", scroll, function(container)
+--     local f = Instance.new("Frame")
+--     f.Parent = container
+--     f.Size = UDim2.new(1,0,0,80)
+--     f.BackgroundColor3 = Color3.fromRGB(40,40,40)
+--     corner(f,8)
+--     return f
+-- end)
+
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
 local tabs = {
     {btn = btnPlayer,   set = setPlayerActive,   name = "Player",   icon = ICON_PLAYER},
