@@ -723,42 +723,26 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 💎 (A V1 + Parent Arrow Switch) =====
+--===== UFO HUB X • Home • MAX999 💎 (A V1 + Parent Arrow Switch | Adjusted Sizes) =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
-    ------------------------------------------------------------------------
-    -- AA1 SAVE
-    ------------------------------------------------------------------------
-    local SAVE = (getgenv and getgenv().UFOX_SAVE) or {
-        get=function(_,_,d)return d end,
-        set=function() end
-    }
-
+    local SAVE = (getgenv and getgenv().UFOX_SAVE) or {get=function(_,_,d)return d end,set=function() end}
     local SCOPE=("Home/MAX999/%d/%d"):format(game.GameId or 0, game.PlaceId or 0)
     local function K(k) return SCOPE.."/"..k end
     local function SaveGet(key,default) local ok,v=pcall(function() return SAVE.get(K(key),default) end) if ok then return v else return default end end
     local function SaveSet(key,value) pcall(function() SAVE.set(K(key),value) end) end
 
-    ------------------------------------------------------------------------
-    -- THEME + HELPERS
-    ------------------------------------------------------------------------
     local THEME={GREEN=Color3.fromRGB(25,255,125),RED=Color3.fromRGB(255,40,40),WHITE=Color3.fromRGB(255,255,255),BLACK=Color3.fromRGB(0,0,0)}
     local function corner(ui,r) local c=Instance.new("UICorner") c.CornerRadius=UDim.new(0,r or 12) c.Parent=ui end
     local function stroke(ui,th,col) local s=Instance.new("UIStroke") s.Thickness=th or 2.2 s.Color=col or THEME.GREEN s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Parent=ui end
     local function tween(o,p,d) TweenService:Create(o,TweenInfo.new(d or 0.12,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play() end
 
-    ------------------------------------------------------------------------
-    -- CLEANUP
-    ------------------------------------------------------------------------
     for _,name in ipairs({"A_Header","A_Row1","A_Row2"}) do
         local o=scroll:FindFirstChild(name)
         if o then o:Destroy() end
     end
 
-    ------------------------------------------------------------------------
-    -- UIListLayout
-    ------------------------------------------------------------------------
     local vlist=scroll:FindFirstChildOfClass("UIListLayout")
     if not vlist then
         vlist=Instance.new("UIListLayout")
@@ -771,16 +755,10 @@ registerRight("Home", function(scroll)
     local base=0
     for _,ch in ipairs(scroll:GetChildren()) do if ch:IsA("GuiObject") and ch~=vlist then base=math.max(base,ch.LayoutOrder or 0) end end
 
-    ------------------------------------------------------------------------
-    -- STATE
-    ------------------------------------------------------------------------
     local MAX999On = SaveGet("MAX999On", false)
     local MAX1On = SaveGet("MAX1On", false)
     local MAX2On = SaveGet("MAX2On", false)
 
-    ------------------------------------------------------------------------
-    -- ฟังก์ชันสร้างลูกศร MAX999
-    ------------------------------------------------------------------------
     local function makeParentArrowSwitch(name,order,labelText,getState,setState)
         local row=Instance.new("Frame")
         row.Name=name
@@ -788,31 +766,29 @@ registerRight("Home", function(scroll)
         row.Size=UDim2.new(1,-6,0,50)
         row.BackgroundColor3=THEME.BLACK
         corner(row,14)
-        stroke(row,3,THEME.GREEN) -- กรอบใหญ่ + เรืองแสง
+        stroke(row,3,THEME.GREEN)
         row.LayoutOrder=order
 
-        -- Label
         local lab=Instance.new("TextLabel")
         lab.Parent=row
         lab.BackgroundTransparency=1
         lab.Size=UDim2.new(1,-60,1,0)
         lab.Position=UDim2.new(0,16,0,0)
         lab.Font=Enum.Font.GothamBold
-        lab.TextSize=18 -- ใหญ่กว่า MAX1/MAX2
+        lab.TextSize=16 -- ลดลงจาก 18 → 16
         lab.TextColor3=THEME.WHITE
         lab.TextXAlignment=Enum.TextXAlignment.Left
         lab.Text="》》》"..labelText.."《《《"
 
-        -- ลูกศร
         local arrow=Instance.new("TextLabel")
         arrow.Parent=row
         arrow.BackgroundTransparency=1
         arrow.Size=UDim2.new(0,24,0,24)
-        arrow.Position=UDim2.new(1,-28,0.5,-12)
+        arrow.Position=UDim2.new(1,-28,0.5,-12) -- อยู่ขวา + กึ่งกลาง
         arrow.Font=Enum.Font.GothamBold
-        arrow.TextSize=24
+        arrow.TextSize=22 -- ลดลงเล็กน้อย
         arrow.TextColor3=THEME.GREEN
-        arrow.Text="▶" -- ปิด = ชี้ขวา
+        arrow.Text="▶"
         arrow.AnchorPoint=Vector2.new(0.5,0.5)
 
         local function update(on)
@@ -835,13 +811,10 @@ registerRight("Home", function(scroll)
         return row,arrow
     end
 
-    ------------------------------------------------------------------------
-    -- ฟังก์ชันสร้างลูก MAX1/MAX2
-    ------------------------------------------------------------------------
     local function makeRowSwitch(name,order,labelText,getState,setState)
         local row = Instance.new("Frame")
-        row.Name=name
-        row.Parent=scroll
+        row.Name = name
+        row.Parent = scroll
         row.Size=UDim2.new(1,-6,0,46)
         row.BackgroundColor3=THEME.BLACK
         corner(row,12)
@@ -854,7 +827,7 @@ registerRight("Home", function(scroll)
         lab.Size=UDim2.new(1,-160,1,0)
         lab.Position=UDim2.new(0,16,0,0)
         lab.Font=Enum.Font.GothamBold
-        lab.TextSize=16 -- ใหญ่ขึ้นนิดหน่อย
+        lab.TextSize=14 -- ลดลงจาก 16 → 14
         lab.TextColor3=THEME.WHITE
         lab.TextXAlignment=Enum.TextXAlignment.Left
         lab.Text=labelText
@@ -899,9 +872,6 @@ registerRight("Home", function(scroll)
         return row
     end
 
-    ------------------------------------------------------------------------
-    -- สร้าง MAX999 Parent Switch
-    ------------------------------------------------------------------------
     local MAX1Row, MAX2Row
     local MAX999Row,arrow = makeParentArrowSwitch("A_Header",base+1,"MAX999 💎", function() return MAX999On end,function(v)
         MAX999On=v
@@ -910,9 +880,6 @@ registerRight("Home", function(scroll)
         if MAX2Row then MAX2Row.Visible=v end
     end)
 
-    ------------------------------------------------------------------------
-    -- ลูก MAX1/MAX2
-    ------------------------------------------------------------------------
     MAX1Row = makeRowSwitch("A_Row1",base+2,"MAX1",function() return MAX1On end,function(v) MAX1On=v SaveSet("MAX1On",v) print("[AA1] MAX1 =",v) end)
     MAX2Row = makeRowSwitch("A_Row2",base+3,"MAX2",function() return MAX2On end,function(v) MAX2On=v SaveSet("MAX2On",v) print("[AA1] MAX2 =",v) end)
 
