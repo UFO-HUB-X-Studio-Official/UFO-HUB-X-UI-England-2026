@@ -723,220 +723,116 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Fixed A V1 Switch) =====
+--===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Model A V1 + AA1) =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
-    local THEME = {
-        GREEN = Color3.fromRGB(25,255,125),
-        RED   = Color3.fromRGB(255,40,40),
-        WHITE = Color3.fromRGB(255,255,255),
-        BLACK = Color3.fromRGB(0,0,0),
+    ------------------------------------------------------------------------
+    -- AA1 SAVE
+    ------------------------------------------------------------------------
+    local SAVE = (getgenv and getgenv().UFOX_SAVE) or {
+        get = function(_, _, d) return d end,
+        set = function() end
     }
-
-    local function corner(ui,r)
-        local c=Instance.new("UICorner")
-        c.CornerRadius=UDim.new(0,r or 12)
-        c.Parent=ui
+    local SCOPE = ("MAX999/%d/%d"):format(
+        tonumber(game.GameId) or 0,
+        tonumber(game.PlaceId) or 0
+    )
+    local function K(k) return SCOPE .. "/" .. k end
+    local function SaveGet(key, default)
+        local ok, v = pcall(function() return SAVE.get(K(key), default) end)
+        return ok and v or default
+    end
+    local function SaveSet(key, value)
+        pcall(function() SAVE.set(K(key), value) end)
     end
 
-    local function stroke(ui,th,col)
-        local s=Instance.new("UIStroke")
-        s.Thickness=th or 2
-        s.Color=col or THEME.GREEN
-        s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
-        s.Parent=ui
+    ------------------------------------------------------------------------
+    -- THEME + HELPERS
+    ------------------------------------------------------------------------
+    local THEME = {GREEN = Color3.fromRGB(25,255,125), RED = Color3.fromRGB(255,40,40), WHITE = Color3.fromRGB(255,255,255), BLACK = Color3.fromRGB(0,0,0)}
+    local function corner(ui,r) local c=Instance.new("UICorner");c.CornerRadius=UDim.new(0,r or 12);c.Parent=ui end
+    local function stroke(ui,th,col) local s=Instance.new("UIStroke");s.Thickness=th or 2.2;s.Color=col or THEME.GREEN;s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border;s.Parent=ui end
+    local function tween(o,p,d) TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play() end
+
+    ------------------------------------------------------------------------
+    -- CLEANUP
+    ------------------------------------------------------------------------
+    for _,name in ipairs({"MAX999","MAX100","MAX1","MAX2"}) do
+        local o = scroll:FindFirstChild(name)
+        if o then o:Destroy() end
     end
 
-    local function tween(o,p,d)
-        TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
-    end
-
+    ------------------------------------------------------------------------
     -- UIListLayout
-    local vlist=scroll:FindFirstChildOfClass("UIListLayout")
+    ------------------------------------------------------------------------
+    local vlist = scroll:FindFirstChildOfClass("UIListLayout")
     if not vlist then
-        vlist=Instance.new("UIListLayout")
-        vlist.Parent=scroll
-        vlist.Padding=UDim.new(0,12)
-        vlist.SortOrder=Enum.SortOrder.LayoutOrder
+        vlist = Instance.new("UIListLayout")
+        vlist.Parent = scroll
+        vlist.Padding = UDim.new(0,12)
+        vlist.SortOrder = Enum.SortOrder.LayoutOrder
     end
-    scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-    local base=0
-    for _,ch in ipairs(scroll:GetChildren()) do
-        if ch:IsA("GuiObject") and ch~=vlist then
-            base=math.max(base,ch.LayoutOrder or 0)
-        end
+    local base = 0
+    for _, ch in ipairs(scroll:GetChildren()) do
+        if ch:IsA("GuiObject") and ch ~= vlist then base = math.max(base,ch.LayoutOrder or 0) end
     end
 
     ------------------------------------------------------------------------
-    -- ฟังก์ชันสร้าง Parent Switch (MAX999)
-    ------------------------------------------------------------------------
-    local MAXState=false
-    local MAXChildren={} -- ทุกอันที่ MAX999 ควบคุม
-
-    local function makeParentSwitch(name,order,labelText,getState,setState)
-        local row=Instance.new("Frame")
-        row.Name=name
-        row.Parent=scroll
-        row.Size=UDim2.new(1,-6,0,50)
-        row.BackgroundColor3=THEME.BLACK
-
-        -- สี่เหลี่ยมตรง
-        local s=Instance.new("UIStroke")
-        s.Thickness=3
-        s.Color=THEME.GREEN
-        s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
-        s.Parent=row
-        row.LayoutOrder=order
-
-        local lab=Instance.new("TextLabel")
-        lab.Parent=row
-        lab.BackgroundTransparency=1
-        lab.Size=UDim2.new(1,-40,1,0)
-        lab.Position=UDim2.new(0,16,0,0)
-        lab.Font=Enum.Font.GothamBold
-        lab.TextSize=18
-        lab.TextColor3=THEME.WHITE
-        lab.TextXAlignment=Enum.TextXAlignment.Left
-        lab.Text="》》》"..labelText.."《《《"
-
-        -- ลูกศร
-        local arrow=Instance.new("TextLabel")
-        arrow.Parent=row
-        arrow.BackgroundTransparency=1
-        arrow.Size=UDim2.new(0,28,0,28)
-        arrow.Position=UDim2.new(1,-24,0.5,0)
-        arrow.Font=Enum.Font.GothamBold
-        arrow.TextSize=26
-        arrow.TextColor3=THEME.WHITE
-        arrow.Text="▶"
-        arrow.AnchorPoint=Vector2.new(0.5,0.5)
-
-        local btn=Instance.new("TextButton")
-        btn.Parent=row
-        btn.BackgroundTransparency=1
-        btn.Size=UDim2.fromScale(1,1)
-        btn.Text=""
-        btn.AutoButtonColor=false
-
-        local function update(on)
-            arrow.Text=on and "▼" or "▶"
-        end
-
-        btn.MouseButton1Click:Connect(function()
-            local new=not getState()
-            setState(new)
-            update(new)
-            for _,c in ipairs(MAXChildren) do
-                c.Visible=new
-            end
-        end)
-
-        update(getState())
-        return row
-    end
-
-    ------------------------------------------------------------------------
-    -- ฟังก์ชันสร้างสวิตช์ A V1
+    -- HELPER: Switch Row
     ------------------------------------------------------------------------
     local function makeRowSwitch(name,order,labelText,getState,setState)
-        local row=Instance.new("Frame")
-        row.Name=name
-        row.Parent=scroll
-        row.Size=UDim2.new(1,-6,0,40)
-        row.BackgroundColor3=THEME.BLACK
-        corner(row,12)
-        stroke(row,2,THEME.GREEN)
-        row.LayoutOrder=order
-
-        local lab=Instance.new("TextLabel")
-        lab.Parent=row
-        lab.BackgroundTransparency=1
-        lab.Size=UDim2.new(1,-60,1,0)
-        lab.Position=UDim2.new(0,16,0,0)
-        lab.Font=Enum.Font.GothamBold
-        lab.TextSize=14
-        lab.TextColor3=THEME.WHITE
-        lab.TextXAlignment=Enum.TextXAlignment.Left
-        lab.Text=labelText
-
-        local sw=Instance.new("Frame")
-        sw.Parent=row
-        sw.AnchorPoint=Vector2.new(1,0.5)
-        sw.Position=UDim2.new(1,-12,0.5,0)
-        sw.Size=UDim2.fromOffset(40,20)
-        sw.BackgroundColor3=THEME.BLACK
-        local swStroke=Instance.new("UIStroke")
-        swStroke.Parent=sw
-        swStroke.Thickness=1.5
-
-        local knob=Instance.new("Frame")
-        knob.Parent=sw
-        knob.Size=UDim2.fromOffset(16,16)
-        knob.BackgroundColor3=THEME.WHITE
-        knob.Position=UDim2.new(0,2,0.5,-8)
-
-        local function update(on)
-            swStroke.Color=on and THEME.GREEN or THEME.RED
-            tween(knob,{Position=UDim2.new(on and 1 or 0,on and -18 or 2,0.5,-8)},0.08)
-        end
-
-        local btn=Instance.new("TextButton")
-        btn.Parent=sw
-        btn.Size=UDim2.fromScale(1,1)
-        btn.BackgroundTransparency=1
-        btn.Text=""
-        btn.AutoButtonColor=false
-
-        btn.MouseButton1Click:Connect(function()
-            local new=not getState()
-            setState(new)
-            update(new)
-        end)
-
+        local row=Instance.new("Frame");row.Name=name;row.Parent=scroll;row.Size=UDim2.new(1,-6,0,36);row.BackgroundColor3=THEME.BLACK;corner(row,12);stroke(row,2.2,THEME.GREEN);row.LayoutOrder=order
+        local lab=Instance.new("TextLabel");lab.Parent=row;lab.BackgroundTransparency=1;lab.Size=UDim2.new(1,-160,1,0);lab.Position=UDim2.new(0,16,0,0);lab.Font=Enum.Font.GothamBold;lab.TextSize=13;lab.TextColor3=THEME.WHITE;lab.TextXAlignment=Enum.TextXAlignment.Left;lab.Text=labelText
+        local sw=Instance.new("Frame");sw.Parent=row;sw.AnchorPoint=Vector2.new(1,0.5);sw.Position=UDim2.new(1,-12,0.5,0);sw.Size=UDim2.fromOffset(52,26);sw.BackgroundColor3=THEME.BLACK;corner(sw,13)
+        local swStroke=Instance.new("UIStroke");swStroke.Parent=sw;swStroke.Thickness=1.8
+        local knob=Instance.new("Frame");knob.Parent=sw;knob.Size=UDim2.fromOffset(22,22);knob.BackgroundColor3=THEME.WHITE;knob.Position=UDim2.new(0,2,0.5,-11);corner(knob,11)
+        local function update(on) swStroke.Color = on and THEME.GREEN or THEME.RED; tween(knob,{Position=UDim2.new(on and 1 or 0,on and -24 or 2,0.5,-11)},0.08) end
+        local btn=Instance.new("TextButton");btn.Parent=sw;btn.BackgroundTransparency=1;btn.Size=UDim2.fromScale(1,1);btn.Text="";btn.AutoButtonColor=false
+        btn.MouseButton1Click:Connect(function() local new=not getState(); setState(new); update(new) end)
         update(getState())
         return row
     end
 
     ------------------------------------------------------------------------
-    -- สร้าง MAX999
+    -- HELPER: Label Row (หัวข้อ)
     ------------------------------------------------------------------------
-    local MAX999Row = makeParentSwitch("MAX999",base+1,"MAX999",
-        function() return MAXState end,
-        function(v) MAXState=v end
-    )
+    local function makeRowLabel(name,order,labelText)
+        local row=Instance.new("Frame");row.Name=name;row.Parent=scroll;row.Size=UDim2.new(1,-6,0,32);row.BackgroundTransparency=1;row.LayoutOrder=order
+        local lab=Instance.new("TextLabel");lab.Parent=row;lab.BackgroundTransparency=1;lab.Size=UDim2.new(1,0,1,0);lab.Font=Enum.Font.GothamBold;lab.TextSize=14;lab.TextColor3=THEME.WHITE;lab.Text=labelText;lab.TextXAlignment=Enum.TextXAlignment.Left
+        return row
+    end
 
     ------------------------------------------------------------------------
-    -- สร้าง MAX100 หัวข้อ (สามารถเปิด/ปิดโดย MAX999)
+    -- MAX999 Parent Switch
     ------------------------------------------------------------------------
-    local MAX100State=false
-    local MAX100Row = makeRowSwitch("MAX100",base+2,"MAX100",
-        function() return MAX100State end,
-        function(v) MAX100State=v end
-    )
-    MAX100Row.Visible=false
-    table.insert(MAXChildren,MAX100Row)
+    local MAX999On = false
+    local MAX999 = makeRowSwitch("MAX999",base+1,"》》》 MAX999 《《《",function() return MAX999On end,function(v)
+        MAX999On=v
+        -- ซ่อน/แสดง MAX100 + MAX1 + MAX2
+        if MAX100 then MAX100.Visible=v end
+        if MAX1 then MAX1.Visible=v end
+        if MAX2 then MAX2.Visible=v end
+    end)
 
     ------------------------------------------------------------------------
-    -- สร้าง MAX1 & MAX2
+    -- MAX100 หัวข้อบ้าน
     ------------------------------------------------------------------------
-    local MAX1State=false
-    local MAX2State=false
+    local MAX100 = makeRowLabel("MAX100",base+2,"》》》 MAX100 《《《")
+    MAX100.Visible=false
 
-    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",
-        function() return MAX1State end,
-        function(v) MAX1State=v end
-    )
+    ------------------------------------------------------------------------
+    -- ระบบในบ้าน: MAX1 + MAX2
+    ------------------------------------------------------------------------
+    local feature1 = SaveGet("MAX1",false)
+    local feature2 = SaveGet("MAX2",false)
+
+    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",function() return feature1 end,function(v) feature1=v; SaveSet("MAX1",v) end)
+    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",function() return feature2 end,function(v) feature2=v; SaveSet("MAX2",v) end)
     MAX1.Visible=false
-    table.insert(MAXChildren,MAX1)
-
-    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",
-        function() return MAX2State end,
-        function(v) MAX2State=v end
-    )
     MAX2.Visible=false
-    table.insert(MAXChildren,MAX2)
 end)
 
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
