@@ -723,13 +723,10 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Clean A V1 Style) =====
+--===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Fixed A V1 Switch) =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
-    ------------------------------------------------------------------------
-    -- THEME
-    ------------------------------------------------------------------------
     local THEME = {
         GREEN = Color3.fromRGB(25,255,125),
         RED   = Color3.fromRGB(255,40,40),
@@ -755,9 +752,7 @@ registerRight("Home", function(scroll)
         TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
     end
 
-    ------------------------------------------------------------------------
     -- UIListLayout
-    ------------------------------------------------------------------------
     local vlist=scroll:FindFirstChildOfClass("UIListLayout")
     if not vlist then
         vlist=Instance.new("UIListLayout")
@@ -775,10 +770,10 @@ registerRight("Home", function(scroll)
     end
 
     ------------------------------------------------------------------------
-    -- MAX999 Parent Switch (สี่เหลี่ยม)
+    -- ฟังก์ชันสร้าง Parent Switch (MAX999)
     ------------------------------------------------------------------------
     local MAXState=false
-    local MAXChildren={}
+    local MAXChildren={} -- ทุกอันที่ MAX999 ควบคุม
 
     local function makeParentSwitch(name,order,labelText,getState,setState)
         local row=Instance.new("Frame")
@@ -787,7 +782,7 @@ registerRight("Home", function(scroll)
         row.Size=UDim2.new(1,-6,0,50)
         row.BackgroundColor3=THEME.BLACK
 
-        -- กรอบสี่เหลี่ยมตรงๆ
+        -- สี่เหลี่ยมตรง
         local s=Instance.new("UIStroke")
         s.Thickness=3
         s.Color=THEME.GREEN
@@ -841,16 +836,6 @@ registerRight("Home", function(scroll)
         update(getState())
         return row
     end
-
-    ------------------------------------------------------------------------
-    -- หัวข้อ MAX100 (สามารถปิดได้)
-    ------------------------------------------------------------------------
-    local MAX100State=false
-    local MAX100Row = makeParentSwitch("MAX100",base+2,"MAX100",
-        function() return MAX100State end,
-        function(v) MAX100State=v end
-    )
-    table.insert(MAXChildren,MAX100Row)
 
     ------------------------------------------------------------------------
     -- ฟังก์ชันสร้างสวิตช์ A V1
@@ -923,15 +908,34 @@ registerRight("Home", function(scroll)
     )
 
     ------------------------------------------------------------------------
-    -- สร้าง MAX1, MAX2 (สวิตช์แบบเดิม)
+    -- สร้าง MAX100 หัวข้อ (สามารถเปิด/ปิดโดย MAX999)
     ------------------------------------------------------------------------
-    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",function() return false end,function(v) end)
-    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",function() return false end,function(v) end)
+    local MAX100State=false
+    local MAX100Row = makeRowSwitch("MAX100",base+2,"MAX100",
+        function() return MAX100State end,
+        function(v) MAX100State=v end
+    )
+    MAX100Row.Visible=false
+    table.insert(MAXChildren,MAX100Row)
 
-    -- ซ่อนตอนเริ่มต้น
+    ------------------------------------------------------------------------
+    -- สร้าง MAX1 & MAX2
+    ------------------------------------------------------------------------
+    local MAX1State=false
+    local MAX2State=false
+
+    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",
+        function() return MAX1State end,
+        function(v) MAX1State=v end
+    )
     MAX1.Visible=false
-    MAX2.Visible=false
     table.insert(MAXChildren,MAX1)
+
+    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",
+        function() return MAX2State end,
+        function(v) MAX2State=v end
+    )
+    MAX2.Visible=false
     table.insert(MAXChildren,MAX2)
 end)
 
