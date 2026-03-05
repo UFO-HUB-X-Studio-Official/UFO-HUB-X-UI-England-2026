@@ -723,7 +723,7 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Model A V1 + AA1) =====
+--===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 (Model A V1) =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
@@ -734,105 +734,159 @@ registerRight("Home", function(scroll)
         get = function(_, _, d) return d end,
         set = function() end
     }
-    local SCOPE = ("MAX999/%d/%d"):format(
-        tonumber(game.GameId) or 0,
-        tonumber(game.PlaceId) or 0
-    )
-    local function K(k) return SCOPE .. "/" .. k end
-    local function SaveGet(key, default)
-        local ok, v = pcall(function() return SAVE.get(K(key), default) end)
-        return ok and v or default
-    end
-    local function SaveSet(key, value)
-        pcall(function() SAVE.set(K(key), value) end)
-    end
+    local SCOPE = ("MAX999/%d/%d"):format(game.GameId or 0, game.PlaceId or 0)
+    local function K(k) return SCOPE.."/"..k end
+    local function SaveGet(k,d) local ok,v=pcall(function() return SAVE.get(K(k),d) end) if ok then return v else return d end end
+    local function SaveSet(k,v) pcall(function() SAVE.set(K(k),v) end) end
 
     ------------------------------------------------------------------------
     -- THEME + HELPERS
     ------------------------------------------------------------------------
-    local THEME = {GREEN = Color3.fromRGB(25,255,125), RED = Color3.fromRGB(255,40,40), WHITE = Color3.fromRGB(255,255,255), BLACK = Color3.fromRGB(0,0,0)}
-    local function corner(ui,r) local c=Instance.new("UICorner");c.CornerRadius=UDim.new(0,r or 12);c.Parent=ui end
-    local function stroke(ui,th,col) local s=Instance.new("UIStroke");s.Thickness=th or 2.2;s.Color=col or THEME.GREEN;s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border;s.Parent=ui end
+    local THEME = {GREEN=Color3.fromRGB(25,255,125), RED=Color3.fromRGB(255,40,40), WHITE=Color3.fromRGB(255,255,255), BLACK=Color3.fromRGB(0,0,0)}
+    local function corner(ui,r) local c=Instance.new("UICorner") c.CornerRadius=UDim.new(0,r or 12) c.Parent=ui end
+    local function stroke(ui,th,col) local s=Instance.new("UIStroke") s.Thickness=th or 2.2 s.Color=col or THEME.GREEN s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Parent=ui end
     local function tween(o,p,d) TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play() end
 
     ------------------------------------------------------------------------
     -- CLEANUP
     ------------------------------------------------------------------------
-    for _,name in ipairs({"MAX999","MAX100","MAX1","MAX2"}) do
-        local o = scroll:FindFirstChild(name)
-        if o then o:Destroy() end
-    end
-
-    ------------------------------------------------------------------------
-    -- UIListLayout
-    ------------------------------------------------------------------------
+    for _,name in ipairs({"MAX999","MAX100","MAX1","MAX2"}) do local o=scroll:FindFirstChild(name) if o then o:Destroy() end end
     local vlist = scroll:FindFirstChildOfClass("UIListLayout")
     if not vlist then
-        vlist = Instance.new("UIListLayout")
-        vlist.Parent = scroll
-        vlist.Padding = UDim.new(0,12)
-        vlist.SortOrder = Enum.SortOrder.LayoutOrder
+        vlist=Instance.new("UIListLayout")
+        vlist.Parent=scroll
+        vlist.Padding=UDim.new(0,12)
+        vlist.SortOrder=Enum.SortOrder.LayoutOrder
     end
-    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-    local base = 0
-    for _, ch in ipairs(scroll:GetChildren()) do
-        if ch:IsA("GuiObject") and ch ~= vlist then base = math.max(base,ch.LayoutOrder or 0) end
-    end
+    scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+    local base=0
+    for _,ch in ipairs(scroll:GetChildren()) do if ch:IsA("GuiObject") and ch~=vlist then base=math.max(base,ch.LayoutOrder or 0) end end
 
     ------------------------------------------------------------------------
-    -- HELPER: Switch Row
+    -- MAX999 (Parent Switch)
     ------------------------------------------------------------------------
+    local MAX999On = SaveGet("MAX999On",false)
+    local MAX999 = Instance.new("Frame")
+    MAX999.Name="MAX999"
+    MAX999.Parent=scroll
+    MAX999.Size=UDim2.new(1,-6,0,46)
+    MAX999.BackgroundColor3=THEME.BLACK
+    MAX999.LayoutOrder=base+1
+    -- สี่เหลี่ยม ไม่มีมุมโค้ง
+    local strokeMAX=Instance.new("UIStroke") strokeMAX.Parent=MAX999 strokeMAX.Thickness=2.2 strokeMAX.Color=THEME.GREEN
+    -- Label
+    local lab999=Instance.new("TextLabel")
+    lab999.Parent=MAX999
+    lab999.BackgroundTransparency=1
+    lab999.Size=UDim2.new(1,-80,1,0)
+    lab999.Position=UDim2.new(0,16,0,0)
+    lab999.Font=Enum.Font.GothamBold
+    lab999.TextSize=16
+    lab999.TextColor3=THEME.WHITE
+    lab999.TextXAlignment=Enum.TextXAlignment.Left
+    lab999.Text="》》》 MAX999 《《《"
+    -- Arrow Button
+    local arrow=Instance.new("TextButton")
+    arrow.Parent=MAX999
+    arrow.BackgroundTransparency=1
+    arrow.AnchorPoint=Vector2.new(1,0.5)
+    arrow.Position=UDim2.new(1,-12,0.5,0)
+    arrow.Size=UDim2.new(0,24,0,24)
+    arrow.Font=Enum.Font.GothamBold
+    arrow.TextSize=18
+    arrow.TextColor3=THEME.WHITE
+    arrow.Text="▶"
+    arrow.AutoButtonColor=false
+
+    local function updateArrow(on) arrow.Text="▶" arrow.Rotation=on and 90 or 0 end
+    updateArrow(MAX999On)
+
+    local function toggleMAX999()
+        MAX999On=not MAX999On
+        SaveSet("MAX999On",MAX999On)
+        updateArrow(MAX999On)
+        -- ซ่อน/แสดง MAX100 + MAX1 + MAX2
+        for _,c in ipairs({MAX100,MAX1,MAX2}) do if c then c.Visible=MAX999On end end
+    end
+    arrow.MouseButton1Click:Connect(toggleMAX999)
+    lab999.MouseButton1Click:Connect(toggleMAX999)
+
+    ------------------------------------------------------------------------
+    -- MAX100 (หัวข้อ)
+    ------------------------------------------------------------------------
+    local MAX100On = SaveGet("MAX100On",true)
+    local MAX100=Instance.new("Frame")
+    MAX100.Name="MAX100"
+    MAX100.Parent=scroll
+    MAX100.Size=UDim2.new(1,-6,0,36)
+    MAX100.BackgroundTransparency=1
+    MAX100.LayoutOrder=base+2
+    local label100=Instance.new("TextLabel")
+    label100.Parent=MAX100
+    label100.BackgroundTransparency=1
+    label100.Size=UDim2.new(1,0,1,0)
+    label100.Font=Enum.Font.GothamBold
+    label100.TextSize=14
+    label100.TextColor3=THEME.WHITE
+    label100.TextXAlignment=Enum.TextXAlignment.Left
+    label100.Text="》》》 MAX100 《《《"
+    label100.MouseButton1Click:Connect(function()
+        MAX100On=not MAX100On
+        SaveSet("MAX100On",MAX100On)
+        for _,c in ipairs({MAX1,MAX2}) do if c then c.Visible=MAX100On end
+    end)
+
+    ------------------------------------------------------------------------
+    -- MAX1 + MAX2 (Switch)
+    ------------------------------------------------------------------------
+    local feature1On=SaveGet("feature1On",false)
+    local feature2On=SaveGet("feature2On",false)
     local function makeRowSwitch(name,order,labelText,getState,setState)
-        local row=Instance.new("Frame");row.Name=name;row.Parent=scroll;row.Size=UDim2.new(1,-6,0,36);row.BackgroundColor3=THEME.BLACK;corner(row,12);stroke(row,2.2,THEME.GREEN);row.LayoutOrder=order
-        local lab=Instance.new("TextLabel");lab.Parent=row;lab.BackgroundTransparency=1;lab.Size=UDim2.new(1,-160,1,0);lab.Position=UDim2.new(0,16,0,0);lab.Font=Enum.Font.GothamBold;lab.TextSize=13;lab.TextColor3=THEME.WHITE;lab.TextXAlignment=Enum.TextXAlignment.Left;lab.Text=labelText
-        local sw=Instance.new("Frame");sw.Parent=row;sw.AnchorPoint=Vector2.new(1,0.5);sw.Position=UDim2.new(1,-12,0.5,0);sw.Size=UDim2.fromOffset(52,26);sw.BackgroundColor3=THEME.BLACK;corner(sw,13)
-        local swStroke=Instance.new("UIStroke");swStroke.Parent=sw;swStroke.Thickness=1.8
-        local knob=Instance.new("Frame");knob.Parent=sw;knob.Size=UDim2.fromOffset(22,22);knob.BackgroundColor3=THEME.WHITE;knob.Position=UDim2.new(0,2,0.5,-11);corner(knob,11)
-        local function update(on) swStroke.Color = on and THEME.GREEN or THEME.RED; tween(knob,{Position=UDim2.new(on and 1 or 0,on and -24 or 2,0.5,-11)},0.08) end
-        local btn=Instance.new("TextButton");btn.Parent=sw;btn.BackgroundTransparency=1;btn.Size=UDim2.fromScale(1,1);btn.Text="";btn.AutoButtonColor=false
-        btn.MouseButton1Click:Connect(function() local new=not getState(); setState(new); update(new) end)
+        local row=Instance.new("Frame")
+        row.Name=name
+        row.Parent=scroll
+        row.Size=UDim2.new(1,-6,0,46)
+        row.BackgroundColor3=THEME.BLACK
+        corner(row,12)
+        stroke(row,2.2,THEME.GREEN)
+        row.LayoutOrder=order
+        local lab=Instance.new("TextLabel")
+        lab.Parent=row
+        lab.BackgroundTransparency=1
+        lab.Size=UDim2.new(1,-160,1,0)
+        lab.Position=UDim2.new(0,16,0,0)
+        lab.Font=Enum.Font.GothamBold
+        lab.TextSize=13
+        lab.TextColor3=THEME.WHITE
+        lab.TextXAlignment=Enum.TextXAlignment.Left
+        lab.Text=labelText
+        local sw=Instance.new("Frame")
+        sw.Parent=row
+        sw.AnchorPoint=Vector2.new(1,0.5)
+        sw.Position=UDim2.new(1,-12,0.5,0)
+        sw.Size=UDim2.fromOffset(52,26)
+        sw.BackgroundColor3=THEME.BLACK
+        corner(sw,13)
+        local swStroke=Instance.new("UIStroke") swStroke.Parent=sw swStroke.Thickness=1.8
+        local knob=Instance.new("Frame") knob.Parent=sw knob.Size=UDim2.fromOffset(22,22) knob.BackgroundColor3=THEME.WHITE knob.Position=UDim2.new(0,2,0.5,-11) corner(knob,11)
+        local function update(on) swStroke.Color=on and THEME.GREEN or THEME.RED tween(knob,{Position=UDim2.new(on and 1 or 0,on and -24 or 2,0.5,-11)},0.08) end
+        local btn=Instance.new("TextButton") btn.Parent=sw btn.BackgroundTransparency=1 btn.Size=UDim2.fromScale(1,1) btn.Text="" btn.AutoButtonColor=false
+        btn.MouseButton1Click:Connect(function()
+            local new=not getState()
+            setState(new)
+            update(new)
+        end)
         update(getState())
         return row
     end
 
-    ------------------------------------------------------------------------
-    -- HELPER: Label Row (หัวข้อ)
-    ------------------------------------------------------------------------
-    local function makeRowLabel(name,order,labelText)
-        local row=Instance.new("Frame");row.Name=name;row.Parent=scroll;row.Size=UDim2.new(1,-6,0,32);row.BackgroundTransparency=1;row.LayoutOrder=order
-        local lab=Instance.new("TextLabel");lab.Parent=row;lab.BackgroundTransparency=1;lab.Size=UDim2.new(1,0,1,0);lab.Font=Enum.Font.GothamBold;lab.TextSize=14;lab.TextColor3=THEME.WHITE;lab.Text=labelText;lab.TextXAlignment=Enum.TextXAlignment.Left
-        return row
-    end
+    MAX1=makeRowSwitch("MAX1",base+3,"MAX1",function() return feature1On end,function(v) feature1On=v SaveSet("feature1On",v) end)
+    MAX2=makeRowSwitch("MAX2",base+4,"MAX2",function() return feature2On end,function(v) feature2On=v SaveSet("feature2On",v) end)
 
-    ------------------------------------------------------------------------
-    -- MAX999 Parent Switch
-    ------------------------------------------------------------------------
-    local MAX999On = false
-    local MAX999 = makeRowSwitch("MAX999",base+1,"》》》 MAX999 《《《",function() return MAX999On end,function(v)
-        MAX999On=v
-        -- ซ่อน/แสดง MAX100 + MAX1 + MAX2
-        if MAX100 then MAX100.Visible=v end
-        if MAX1 then MAX1.Visible=v end
-        if MAX2 then MAX2.Visible=v end
-    end)
-
-    ------------------------------------------------------------------------
-    -- MAX100 หัวข้อบ้าน
-    ------------------------------------------------------------------------
-    local MAX100 = makeRowLabel("MAX100",base+2,"》》》 MAX100 《《《")
-    MAX100.Visible=false
-
-    ------------------------------------------------------------------------
-    -- ระบบในบ้าน: MAX1 + MAX2
-    ------------------------------------------------------------------------
-    local feature1 = SaveGet("MAX1",false)
-    local feature2 = SaveGet("MAX2",false)
-
-    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",function() return feature1 end,function(v) feature1=v; SaveSet("MAX1",v) end)
-    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",function() return feature2 end,function(v) feature2=v; SaveSet("MAX2",v) end)
-    MAX1.Visible=false
-    MAX2.Visible=false
+    -- เริ่มแรก ซ่อน/แสดงตาม MAX999
+    MAX100.Visible=MAX999On
+    MAX1.Visible=MAX999On and MAX100On
+    MAX2.Visible=MAX999On and MAX100On
 end)
 
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
