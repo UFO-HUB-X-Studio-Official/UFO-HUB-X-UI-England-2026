@@ -723,7 +723,7 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 💎 (Model A V1) =====
+--===== UFO HUB X • Home • MAX999 💎 (Model A V1 + Switch) =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
@@ -780,7 +780,7 @@ registerRight("Home", function(scroll)
     ------------------------------------------------------------------------
     -- CLEANUP เฉพาะส่วนของ Model A V1 เดิม
     ------------------------------------------------------------------------
-    for _, name in ipairs({"A_Header","A_Row1","A_Row2","A_Row3","A_Row4"}) do
+    for _, name in ipairs({"A_Header","A_Row1","A_Row2"}) do
         local o = scroll:FindFirstChild(name)
         if o then o:Destroy() end
     end
@@ -805,7 +805,7 @@ registerRight("Home", function(scroll)
     end
 
     ------------------------------------------------------------------------
-    -- HEADER (สูง 36, GothamBold 16, ซ้าย, สีขาว)
+    -- HEADER
     ------------------------------------------------------------------------
     local header = Instance.new("TextLabel")
     header.Name = "A_Header"
@@ -820,57 +820,20 @@ registerRight("Home", function(scroll)
     header.LayoutOrder = base + 1
 
     ------------------------------------------------------------------------
-    -- STATE + AA1 (อ่านจาก SAVE)
+    -- STATE + AA1
     ------------------------------------------------------------------------
-    local feature1On = SaveGet("feature1On", false)
-    local feature2On = SaveGet("feature2On", false)
+    local MAX1On = SaveGet("MAX1On", false)
+    local MAX2On = SaveGet("MAX2On", false)
 
-    local function applyFeature1() print("[AA1] Feature1 =", feature1On) end
-    local function applyFeature2() print("[AA1] Feature2 =", feature2On) end
+    local function applyMAX1() print("[AA1] MAX1 =", MAX1On) end
+    local function applyMAX2() print("[AA1] MAX2 =", MAX2On) end
 
-    applyFeature1()
-    applyFeature2()
+    applyMAX1()
+    applyMAX2()
 
     ------------------------------------------------------------------------
-    -- ฟังก์ชันสร้างแถว ▶ / Switch
+    -- ฟังก์ชันสร้างสวิตช์
     ------------------------------------------------------------------------
-    local function makeRowButton(name,order,labelText,onClick)
-        local row = Instance.new("Frame")
-        row.Name = name
-        row.Parent = scroll
-        row.Size = UDim2.new(1,-6,0,46)
-        row.BackgroundColor3 = THEME.BLACK
-        corner(row,12)
-        stroke(row,2.2,THEME.GREEN)
-        row.LayoutOrder = order
-
-        local lab = Instance.new("TextLabel")
-        lab.Parent = row
-        lab.BackgroundTransparency = 1
-        lab.Size = UDim2.new(1,-80,1,0)
-        lab.Position = UDim2.new(0,16,0,0)
-        lab.Font = Enum.Font.GothamBold
-        lab.TextSize = 13
-        lab.TextColor3 = THEME.WHITE
-        lab.TextXAlignment = Enum.TextXAlignment.Left
-        lab.Text = labelText
-
-        local btn = Instance.new("TextButton")
-        btn.Parent = row
-        btn.BackgroundTransparency = 1
-        btn.AnchorPoint = Vector2.new(1,0.5)
-        btn.Position = UDim2.new(1,-12,0.5,0)
-        btn.Size = UDim2.new(0,24,0,24)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 18
-        btn.TextColor3 = THEME.WHITE
-        btn.Text = "▶"
-        btn.AutoButtonColor = false
-        if onClick then btn.MouseButton1Click:Connect(onClick) end
-
-        return row
-    end
-
     local function makeRowSwitch(name,order,labelText,getState,setState)
         local row = Instance.new("Frame")
         row.Name = name
@@ -935,10 +898,19 @@ registerRight("Home", function(scroll)
     end
 
     ------------------------------------------------------------------------
-    -- ตัวอย่างแถว
+    -- ตัวอย่างแถวสวิตช์ MAX1 / MAX2
     ------------------------------------------------------------------------
-    makeRowButton("A_Row1", base + 2, "MAX1", function() print("Clicked MAX1") end)
-    makeRowButton("A_Row2", base + 3, "MAX2", function() print("Clicked MAX2") end)
+    makeRowSwitch("A_Row1", base + 2, "MAX1", function() return MAX1On end, function(v)
+        MAX1On = v
+        SaveSet("MAX1On",v)
+        applyMAX1()
+    end)
+
+    makeRowSwitch("A_Row2", base + 3, "MAX2", function() return MAX2On end, function(v)
+        MAX2On = v
+        SaveSet("MAX2On",v)
+        applyMAX2()
+    end)
 end)
 
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
