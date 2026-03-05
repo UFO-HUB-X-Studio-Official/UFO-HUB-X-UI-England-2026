@@ -723,107 +723,223 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
-local TweenService = game:GetService("TweenService")
-local THEME = {
-    GREEN = Color3.fromRGB(25,255,125),
-    RED   = Color3.fromRGB(255,40,40),
-    WHITE = Color3.fromRGB(255,255,255),
-    BLACK = Color3.fromRGB(0,0,0),
-}
+--===== UFO HUB X • Home • MAX999 💎 (Model A V1) =====
+registerRight("Home", function(scroll)
+    local TweenService = game:GetService("TweenService")
 
-local function corner(ui,r)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0,r or 12)
-    c.Parent = ui
-end
+    ------------------------------------------------------------------------
+    -- AA1 SAVE (Runner Style: getgenv().UFOX_SAVE)
+    ------------------------------------------------------------------------
+    local SAVE = (getgenv and getgenv().UFOX_SAVE) or {
+        get = function(_, _, d) return d end,
+        set = function() end
+    }
 
-local function stroke(ui,th,col)
-    local s = Instance.new("UIStroke")
-    s.Thickness = th or 2.2
-    s.Color = col or THEME.GREEN
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    s.Parent = ui
-end
+    local SCOPE = ("Home/MAX999/%d/%d"):format(
+        tonumber(game.GameId) or 0,
+        tonumber(game.PlaceId) or 0
+    )
 
-local function tween(o,props,d)
-    TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props):Play()
-end
+    local function K(k) return SCOPE.."/"..k end
+    local function SaveGet(key, default)
+        local ok, v = pcall(function() return SAVE.get(K(key), default) end)
+        if ok then return v else return default end
+    end
+    local function SaveSet(key, value)
+        pcall(function() SAVE.set(K(key), value) end)
+    end
 
--- ตัวอย่างฟังก์ชัน expandable row
-local function makeExpandableRow(name, order, labelText, parent, contentFunc)
-    local expanded = false
-    local row = Instance.new("Frame")
-    row.Name = name
-    row.Parent = parent
-    row.Size = UDim2.new(1,-6,0,46)
-    row.BackgroundColor3 = THEME.BLACK
-    corner(row,12)
-    stroke(row,2.2,THEME.GREEN)
-    row.LayoutOrder = order
+    ------------------------------------------------------------------------
+    -- THEME + HELPERS
+    ------------------------------------------------------------------------
+    local THEME = {
+        GREEN = Color3.fromRGB(25,255,125),
+        RED   = Color3.fromRGB(255,40,40),
+        WHITE = Color3.fromRGB(255,255,255),
+        BLACK = Color3.fromRGB(0,0,0),
+    }
 
-    -- Label ซ้าย
-    local lab = Instance.new("TextLabel")
-    lab.Parent = row
-    lab.BackgroundTransparency = 1
-    lab.Size = UDim2.new(1,-40,1,0)
-    lab.Position = UDim2.new(0,16,0,0)
-    lab.Font = Enum.Font.GothamBold
-    lab.TextSize = 13
-    lab.TextColor3 = THEME.WHITE
-    lab.TextXAlignment = Enum.TextXAlignment.Left
-    lab.Text = labelText
+    local function corner(ui,r)
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0,r or 12)
+        c.Parent = ui
+    end
 
-    -- ลูกศรขวา
-    local arrow = Instance.new("TextLabel")
-    arrow.Parent = row
-    arrow.BackgroundTransparency = 1
-    arrow.AnchorPoint = Vector2.new(1,0.5)
-    arrow.Position = UDim2.new(1,-12,0.5,0)
-    arrow.Size = UDim2.new(0,24,0,24)
-    arrow.Font = Enum.Font.GothamBold
-    arrow.TextSize = 18
-    arrow.TextColor3 = THEME.WHITE
-    arrow.Text = "▶"
+    local function stroke(ui,th,col)
+        local s = Instance.new("UIStroke")
+        s.Thickness = th or 2.2
+        s.Color = col or THEME.GREEN
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        s.Parent = ui
+    end
 
-    -- Container สำหรับระบบที่จะแสดง/ซ่อน
-    local contentContainer = Instance.new("Frame")
-    contentContainer.Name = name.."_Content"
-    contentContainer.Parent = parent
-    contentContainer.Size = UDim2.new(1,0,0,0)
-    contentContainer.BackgroundTransparency = 1
-    contentContainer.ClipsDescendants = true
-    contentContainer.LayoutOrder = order + 1
+    local function tween(o,p,d)
+        TweenService:Create(o, TweenInfo.new(d or 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), p):Play()
+    end
 
-    -- สร้าง content จริงด้วย callback
-    local contentFrame = contentFunc(contentContainer)
-    contentFrame.Size = UDim2.new(1,0,0, contentFrame.Size.Y.Offset)
+    ------------------------------------------------------------------------
+    -- CLEANUP เฉพาะส่วนของ Model A V1 เดิม
+    ------------------------------------------------------------------------
+    for _, name in ipairs({"A_Header","A_Row1","A_Row2","A_Row3","A_Row4"}) do
+        local o = scroll:FindFirstChild(name)
+        if o then o:Destroy() end
+    end
 
-    -- ปุ่มกด
-    row.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            expanded = not expanded
-            if expanded then
-                tween(arrow,{Rotation = 90},0.15)
-                tween(contentContainer,{Size=UDim2.new(1,0,0,contentFrame.Size.Y.Offset)},0.2)
-            else
-                tween(arrow,{Rotation = 0},0.15)
-                tween(contentContainer,{Size=UDim2.new(1,0,0,0)},0.2)
-            end
+    ------------------------------------------------------------------------
+    -- UIListLayout (Model A V1 rules)
+    ------------------------------------------------------------------------
+    local vlist = scroll:FindFirstChildOfClass("UIListLayout")
+    if not vlist then
+        vlist = Instance.new("UIListLayout")
+        vlist.Parent = scroll
+        vlist.Padding = UDim.new(0,12)
+        vlist.SortOrder = Enum.SortOrder.LayoutOrder
+    end
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    local base = 0
+    for _, ch in ipairs(scroll:GetChildren()) do
+        if ch:IsA("GuiObject") and ch ~= vlist then
+            base = math.max(base, ch.LayoutOrder or 0)
         end
-    end)
+    end
 
-    return row, contentContainer
-end
+    ------------------------------------------------------------------------
+    -- HEADER (สูง 36, GothamBold 16, ซ้าย, สีขาว)
+    ------------------------------------------------------------------------
+    local header = Instance.new("TextLabel")
+    header.Name = "A_Header"
+    header.Parent = scroll
+    header.BackgroundTransparency = 1
+    header.Size = UDim2.new(1,0,0,36)
+    header.Font = Enum.Font.GothamBold
+    header.TextSize = 16
+    header.TextColor3 = THEME.WHITE
+    header.TextXAlignment = Enum.TextXAlignment.Left
+    header.Text = "MAX999 💎"
+    header.LayoutOrder = base + 1
 
--- ตัวอย่างการใช้งาน:
--- makeExpandableRow("TestRow", 1, "Expandable Feature", scroll, function(container)
---     local f = Instance.new("Frame")
---     f.Parent = container
---     f.Size = UDim2.new(1,0,0,80)
---     f.BackgroundColor3 = Color3.fromRGB(40,40,40)
---     corner(f,8)
---     return f
--- end)
+    ------------------------------------------------------------------------
+    -- STATE + AA1 (อ่านจาก SAVE)
+    ------------------------------------------------------------------------
+    local feature1On = SaveGet("feature1On", false)
+    local feature2On = SaveGet("feature2On", false)
+
+    local function applyFeature1() print("[AA1] Feature1 =", feature1On) end
+    local function applyFeature2() print("[AA1] Feature2 =", feature2On) end
+
+    applyFeature1()
+    applyFeature2()
+
+    ------------------------------------------------------------------------
+    -- ฟังก์ชันสร้างแถว ▶ / Switch
+    ------------------------------------------------------------------------
+    local function makeRowButton(name,order,labelText,onClick)
+        local row = Instance.new("Frame")
+        row.Name = name
+        row.Parent = scroll
+        row.Size = UDim2.new(1,-6,0,46)
+        row.BackgroundColor3 = THEME.BLACK
+        corner(row,12)
+        stroke(row,2.2,THEME.GREEN)
+        row.LayoutOrder = order
+
+        local lab = Instance.new("TextLabel")
+        lab.Parent = row
+        lab.BackgroundTransparency = 1
+        lab.Size = UDim2.new(1,-80,1,0)
+        lab.Position = UDim2.new(0,16,0,0)
+        lab.Font = Enum.Font.GothamBold
+        lab.TextSize = 13
+        lab.TextColor3 = THEME.WHITE
+        lab.TextXAlignment = Enum.TextXAlignment.Left
+        lab.Text = labelText
+
+        local btn = Instance.new("TextButton")
+        btn.Parent = row
+        btn.BackgroundTransparency = 1
+        btn.AnchorPoint = Vector2.new(1,0.5)
+        btn.Position = UDim2.new(1,-12,0.5,0)
+        btn.Size = UDim2.new(0,24,0,24)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 18
+        btn.TextColor3 = THEME.WHITE
+        btn.Text = "▶"
+        btn.AutoButtonColor = false
+        if onClick then btn.MouseButton1Click:Connect(onClick) end
+
+        return row
+    end
+
+    local function makeRowSwitch(name,order,labelText,getState,setState)
+        local row = Instance.new("Frame")
+        row.Name = name
+        row.Parent = scroll
+        row.Size = UDim2.new(1,-6,0,46)
+        row.BackgroundColor3 = THEME.BLACK
+        corner(row,12)
+        stroke(row,2.2,THEME.GREEN)
+        row.LayoutOrder = order
+
+        local lab = Instance.new("TextLabel")
+        lab.Parent = row
+        lab.BackgroundTransparency = 1
+        lab.Size = UDim2.new(1,-160,1,0)
+        lab.Position = UDim2.new(0,16,0,0)
+        lab.Font = Enum.Font.GothamBold
+        lab.TextSize = 13
+        lab.TextColor3 = THEME.WHITE
+        lab.TextXAlignment = Enum.TextXAlignment.Left
+        lab.Text = labelText
+
+        local sw = Instance.new("Frame")
+        sw.Parent = row
+        sw.AnchorPoint = Vector2.new(1,0.5)
+        sw.Position = UDim2.new(1,-12,0.5,0)
+        sw.Size = UDim2.fromOffset(52,26)
+        sw.BackgroundColor3 = THEME.BLACK
+        corner(sw,13)
+
+        local swStroke = Instance.new("UIStroke")
+        swStroke.Parent = sw
+        swStroke.Thickness = 1.8
+
+        local knob = Instance.new("Frame")
+        knob.Parent = sw
+        knob.Size = UDim2.fromOffset(22,22)
+        knob.BackgroundColor3 = THEME.WHITE
+        knob.Position = UDim2.new(0,2,0.5,-11)
+        corner(knob,11)
+
+        local function update(on)
+            swStroke.Color = on and THEME.GREEN or THEME.RED
+            tween(knob, {Position = UDim2.new(on and 1 or 0, on and -24 or 2, 0.5, -11)},0.08)
+        end
+
+        local btn = Instance.new("TextButton")
+        btn.Parent = sw
+        btn.BackgroundTransparency = 1
+        btn.Size = UDim2.fromScale(1,1)
+        btn.Text = ""
+        btn.AutoButtonColor = false
+
+        btn.MouseButton1Click:Connect(function()
+            local new = not getState()
+            setState(new)
+            update(new)
+        end)
+
+        update(getState())
+
+        return row
+    end
+
+    ------------------------------------------------------------------------
+    -- ตัวอย่างแถว
+    ------------------------------------------------------------------------
+    makeRowButton("A_Row1", base + 2, "MAX1", function() print("Clicked MAX1") end)
+    makeRowButton("A_Row2", base + 3, "MAX2", function() print("Clicked MAX2") end)
+end)
 
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
 local tabs = {
