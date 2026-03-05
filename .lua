@@ -723,7 +723,7 @@ registerRight("Update", function(scroll) end)
 registerRight("Server", function(scroll) end)
 registerRight("Settings", function(scroll) end)
 
---===== UFO HUB X • Home • MAX999 + MAX1/2 Switches =====
+--===== UFO HUB X • Home • MAX999 + MAX100 + MAX1/2 =====
 registerRight("Home", function(scroll)
     local TweenService = game:GetService("TweenService")
 
@@ -737,9 +737,6 @@ registerRight("Home", function(scroll)
         BLACK = Color3.fromRGB(0,0,0),
     }
 
-    ------------------------------------------------------------------------
-    -- Helper Tween
-    ------------------------------------------------------------------------
     local function tween(o,p,d)
         TweenService:Create(o,TweenInfo.new(d or 0.08,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
     end
@@ -764,18 +761,19 @@ registerRight("Home", function(scroll)
     end
 
     ------------------------------------------------------------------------
-    -- MAX999 Parent Switch
+    -- MAX999 Parent Switch with Image
     ------------------------------------------------------------------------
     local MAXState=false
     local MAXRow,MAXArrow
     local MAXChildren={}
 
-    local function makeParentArrowSwitch(name,order,labelText,getState,setState)
+    local function makeParentArrowSwitch(name,order,labelText,getState,setState,imgId)
         local row=Instance.new("Frame")
         row.Name=name
         row.Parent=scroll
         row.Size=UDim2.new(1,-6,0,50)
         row.BackgroundColor3=THEME.BLACK
+
         -- กรอบสี่เหลี่ยมตรงๆ
         local s=Instance.new("UIStroke")
         s.Thickness=3
@@ -787,14 +785,15 @@ registerRight("Home", function(scroll)
         local lab=Instance.new("TextLabel")
         lab.Parent=row
         lab.BackgroundTransparency=1
-        lab.Size=UDim2.new(1,-60,1,0)
+        lab.Size=UDim2.new(1,-100,1,0)
         lab.Position=UDim2.new(0,16,0,0)
         lab.Font=Enum.Font.GothamBold
-        lab.TextSize=16
+        lab.TextSize=18
         lab.TextColor3=THEME.WHITE
         lab.TextXAlignment=Enum.TextXAlignment.Left
         lab.Text="》》》"..labelText.."《《《"
 
+        -- ลูกศร
         local arrow=Instance.new("TextLabel")
         arrow.Parent=row
         arrow.BackgroundTransparency=1
@@ -806,8 +805,17 @@ registerRight("Home", function(scroll)
         arrow.Text="▶"
         arrow.AnchorPoint=Vector2.new(0.5,0.5)
 
+        -- รูปด้านขวา
+        local img = Instance.new("ImageLabel")
+        img.Parent = row
+        img.Size=UDim2.new(0,28,0,28)
+        img.Position=UDim2.new(1,-60,0.5,0)
+        img.AnchorPoint=Vector2.new(0.5,0.5)
+        img.BackgroundTransparency=1
+        img.Image = "rbxassetid://"..tostring(imgId)
+
         local function update(on)
-            arrow.Text=on and "▼" or "▶"
+            arrow.Text = on and "▼" or "▶"
         end
 
         local btn=Instance.new("TextButton")
@@ -820,7 +828,6 @@ registerRight("Home", function(scroll)
             local new=not getState()
             setState(new)
             update(new)
-            -- แสดง/ซ่อน MAXChildren
             for _,c in ipairs(MAXChildren) do
                 c.Visible=new
             end
@@ -898,14 +905,29 @@ registerRight("Home", function(scroll)
     ------------------------------------------------------------------------
     MAXRow,MAXArrow = makeParentArrowSwitch("MAX999",base+1,"MAX999",
         function() return MAXState end,
-        function(v) MAXState=v end
+        function(v) MAXState=v end,
+        100650447103028
     )
 
     ------------------------------------------------------------------------
-    -- สร้าง MAX1, MAX2 แล้วเก็บใน MAXChildren
+    -- เพิ่มหัวข้อ MAX100
     ------------------------------------------------------------------------
-    local MAX1 = makeRowSwitch("MAX1",base+2,"MAX1",function() return false end,function(v) end)
-    local MAX2 = makeRowSwitch("MAX2",base+3,"MAX2",function() return false end,function(v) end)
+    local headLabel = Instance.new("TextLabel")
+    headLabel.Parent = scroll
+    headLabel.BackgroundTransparency = 1
+    headLabel.Size = UDim2.new(1,0,0,30)
+    headLabel.Font = Enum.Font.GothamBold
+    headLabel.TextSize = 16
+    headLabel.TextColor3 = THEME.WHITE
+    headLabel.TextXAlignment = Enum.TextXAlignment.Left
+    headLabel.Text="》》》 MAX100 《《《"
+    headLabel.LayoutOrder = base+2
+
+    ------------------------------------------------------------------------
+    -- สร้าง MAX1, MAX2
+    ------------------------------------------------------------------------
+    local MAX1 = makeRowSwitch("MAX1",base+3,"MAX1",function() return false end,function(v) end)
+    local MAX2 = makeRowSwitch("MAX2",base+4,"MAX2",function() return false end,function(v) end)
 
     -- ซ่อนตอนเริ่มต้น
     MAX1.Visible=false
