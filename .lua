@@ -893,6 +893,228 @@ registerRight("Home", function(scroll)
     MAX2Row.Visible=false
 end)
 
+-- [[ UFO HUB X • MULTI-LANGUAGE SYSTEM (6 LANGUAGES) ]]
+-- Model A V1 (Theme) + Model A V2 (Selector) + Model A V3 (Switch)
+
+registerRight("Settings", function(scroll)
+    local UserInputService = game:GetService("UserInputService")
+    local TweenService = game:GetService("TweenService")
+
+    ------------------------------------------------------------------------
+    -- [1] DATABASE & STATE
+    ------------------------------------------------------------------------
+    local LANGUAGES = {
+        {id = "EN", name = "English", flag = "🇺🇸"},
+        {id = "TH", name = "ไทย", flag = "🇹🇭"},
+        {id = "VN", name = "Tiếng Việt", flag = "🇻🇳"},
+        {id = "ID", name = "Bahasa Indonesia", flag = "🇮🇩"},
+        {id = "BR", name = "Português", flag = "🇧🇷"},
+        {id = "PH", name = "Filipino", flag = "🇵🇭"},
+    }
+
+    local TRANSLATIONS = {
+        ["EN"] = {SettingTitle = "Translate Settings", Header = "Language Study", Row1 = "Hate Language", Search = "🔍 Search Language"},
+        ["TH"] = {SettingTitle = "ตั้งค่า แปลภาษา", Header = "เรียนภาษา", Row1 = "เกลียดภาษา", Search = "🔍 ค้นหาภาษา"},
+        ["VN"] = {SettingTitle = "Cài đặt dịch", Header = "Học ngôn ngữ", Row1 = "Ghét ngôn ngữ", Search = "🔍 Tìm kiếm"},
+        ["ID"] = {SettingTitle = "Pengaturan Terjemahan", Header = "Belajar Bahasa", Row1 = "Benci Bahasa", Search = "🔍 Cari Bahasa"},
+        ["BR"] = {SettingTitle = "Configurações de Tradução", Header = "Estudo de Idiomas", Row1 = "Odiar Idioma", Search = "🔍 Pesquisar"},
+        ["PH"] = {SettingTitle = "Mga Setting ng Pagsasalin", Header = "Pag-aaral ng Wika", Row1 = "Ayaw sa Wika", Search = "🔍 Maghanap"}
+    }
+
+    local currentLang = "EN"
+    local translateEnabled = true
+    local uiElements = {} -- เก็บ UI ที่ต้องอัปเดตคำแปล
+
+    ------------------------------------------------------------------------
+    -- [2] THEME & HELPERS (Model A V1)
+    ------------------------------------------------------------------------
+    local THEME = {
+        GREEN = Color3.fromRGB(25, 255, 125),
+        GREEN_DARK = Color3.fromRGB(0, 120, 60),
+        RED = Color3.fromRGB(255, 40, 40),
+        WHITE = Color3.fromRGB(255, 255, 255),
+        BLACK = Color3.fromRGB(0, 0, 0),
+    }
+
+    local function corner(ui, r)
+        local c = Instance.new("UICorner", ui)
+        c.CornerRadius = UDim.new(0, r or 12)
+    end
+
+    local function stroke(ui, th, col)
+        local s = Instance.new("UIStroke", ui)
+        s.Thickness = th or 2.2
+        s.Color = col or THEME.GREEN
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        return s
+    end
+
+    ------------------------------------------------------------------------
+    -- [3] UPDATE UI SYSTEM (หัวใจสำคัญของการเปลี่ยนภาษา)
+    ------------------------------------------------------------------------
+    local function updateAllTexts()
+        local langData = TRANSLATIONS[currentLang]
+        for _, data in ipairs(uiElements) do
+            if data.key and langData[data.key] then
+                data.obj.Text = langData[data.key]
+            end
+        end
+    end
+
+    ------------------------------------------------------------------------
+    -- [4] SWITCH SYSTEM (Model A V3) - "Translate Settings"
+    ------------------------------------------------------------------------
+    local function makeV3Switch(key, order)
+        local row = Instance.new("Frame", scroll)
+        row.Size = UDim2.new(1, -6, 0, 50)
+        row.BackgroundColor3 = THEME.BLACK
+        row.LayoutOrder = order
+        corner(row)
+        stroke(row)
+
+        local lab = Instance.new("TextLabel", row)
+        lab.BackgroundTransparency = 1
+        lab.Size = UDim2.new(1, -80, 1, 0)
+        lab.Position = UDim2.new(0, 16, 0, 0)
+        lab.Font = Enum.Font.GothamBold
+        lab.TextSize = 14
+        lab.TextColor3 = THEME.WHITE
+        lab.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(uiElements, {obj = lab, key = key})
+
+        local sw = Instance.new("Frame", row)
+        sw.AnchorPoint = Vector2.new(1, 0.5)
+        sw.Position = UDim2.new(1, -12, 0.5, 0)
+        sw.Size = UDim2.fromOffset(50, 24)
+        sw.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        corner(sw, 12)
+        local sStroke = stroke(sw, 1.5, THEME.GREEN)
+
+        local knob = Instance.new("Frame", sw)
+        knob.Size = UDim2.fromOffset(20, 20)
+        knob.Position = UDim2.new(0, 2, 0.5, -10)
+        knob.BackgroundColor3 = THEME.WHITE
+        corner(knob, 10)
+
+        local function updateVis(on)
+            sStroke.Color = on and THEME.GREEN or THEME.RED
+            TweenService:Create(knob, TweenInfo.new(0.2), {
+                Position = UDim2.new(on and 1 or 0, on and -22 or 2, 0.5, -10)
+            }):Play()
+        end
+
+        local btn = Instance.new("TextButton", sw)
+        btn.Size = UDim2.fromScale(1,1)
+        btn.BackgroundTransparency = 1
+        btn.Text = ""
+        btn.MouseButton1Click:Connect(function()
+            translateEnabled = not translateEnabled
+            updateVis(translateEnabled)
+        end)
+        updateVis(translateEnabled)
+    end
+
+    ------------------------------------------------------------------------
+    -- [5] LANGUAGE SELECTOR (Model A V2) - "Hate Language"
+    ------------------------------------------------------------------------
+    local function makeV2Selector(key, order)
+        local row = Instance.new("Frame", scroll)
+        row.Size = UDim2.new(1, -6, 0, 50)
+        row.BackgroundColor3 = THEME.BLACK
+        row.LayoutOrder = order
+        corner(row)
+        stroke(row)
+
+        local lab = Instance.new("TextLabel", row)
+        lab.BackgroundTransparency = 1
+        lab.Size = UDim2.new(0, 150, 1, 0)
+        lab.Position = UDim2.new(0, 16, 0, 0)
+        lab.Font = Enum.Font.GothamBold
+        lab.TextSize = 13
+        lab.TextColor3 = THEME.WHITE
+        lab.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(uiElements, {obj = lab, key = key})
+
+        local selectBtn = Instance.new("TextButton", row)
+        selectBtn.AnchorPoint = Vector2.new(1, 0.5)
+        selectBtn.Position = UDim2.new(1, -12, 0.5, 0)
+        selectBtn.Size = UDim2.new(0, 180, 0, 30)
+        selectBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        selectBtn.Font = Enum.Font.GothamBold
+        selectBtn.TextSize = 13
+        selectBtn.TextColor3 = THEME.WHITE
+        selectBtn.Text = LANGUAGES[1].flag .. " " .. LANGUAGES[1].name
+        corner(selectBtn, 8)
+        local sStroke = stroke(selectBtn, 1.8, THEME.GREEN_DARK)
+
+        -- Popup Logic
+        local optionsPanel = nil
+        selectBtn.MouseButton1Click:Connect(function()
+            if optionsPanel then optionsPanel:Destroy() optionsPanel = nil return end
+            
+            optionsPanel = Instance.new("Frame", scroll.Parent)
+            optionsPanel.Size = UDim2.new(0, 200, 0, 250)
+            optionsPanel.Position = UDim2.new(0.5, 50, 0.2, 0)
+            optionsPanel.BackgroundColor3 = THEME.BLACK
+            optionsPanel.ZIndex = 100
+            corner(optionsPanel)
+            stroke(optionsPanel, 2, THEME.GREEN)
+
+            local list = Instance.new("ScrollingFrame", optionsPanel)
+            list.Size = UDim2.new(1, -10, 1, -10)
+            list.Position = UDim2.new(0, 5, 0, 5)
+            list.BackgroundTransparency = 1
+            list.ScrollBarThickness = 2
+            Instance.new("UIListLayout", list).Padding = UDim.new(0, 5)
+
+            for _, lang in ipairs(LANGUAGES) do
+                local lBtn = Instance.new("TextButton", list)
+                lBtn.Size = UDim2.new(1, 0, 0, 35)
+                lBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+                lBtn.TextColor3 = THEME.WHITE
+                lBtn.Font = Enum.Font.GothamBold
+                lBtn.Text = lang.flag .. " " .. lang.name
+                corner(lBtn, 6)
+
+                lBtn.MouseButton1Click:Connect(function()
+                    currentLang = lang.id
+                    selectBtn.Text = lang.flag .. " " .. lang.name
+                    if translateEnabled then updateAllTexts() end
+                    optionsPanel:Destroy()
+                    optionsPanel = nil
+                end)
+            end
+        end)
+    end
+
+    ------------------------------------------------------------------------
+    -- [6] BUILD UI
+    ------------------------------------------------------------------------
+    local vlist = Instance.new("UIListLayout", scroll)
+    vlist.Padding = UDim.new(0, 10)
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    -- หัวข้อ (Model A V1 Style)
+    local head = Instance.new("TextLabel", scroll)
+    head.Size = UDim2.new(1, 0, 0, 30)
+    head.BackgroundTransparency = 1
+    head.Font = Enum.Font.GothamBold
+    head.TextSize = 16
+    head.TextColor3 = THEME.WHITE
+    head.TextXAlignment = Enum.TextXAlignment.Left
+    table.insert(uiElements, {obj = head, key = "Header"})
+
+    -- ปุ่ม Switch (Model A V3)
+    makeV3Switch("SettingTitle", 2)
+
+    -- ปุ่มเลือกภาษา (Model A V2)
+    makeV2Selector("Row1", 3)
+
+    -- เริ่มต้นภาษาอังกฤษ
+    updateAllTexts()
+end)
+
+
 ---- ========== ผูกปุ่มแท็บ + เปิดแท็บแรก ==========
 local tabs = {
     {btn = btnPlayer,   set = setPlayerActive,   name = "Player",   icon = ICON_PLAYER},
